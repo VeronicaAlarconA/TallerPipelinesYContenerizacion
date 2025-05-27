@@ -12,13 +12,16 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
+      - name: Verificar que el archivo create.sql existe
+        run: ls -lh create.sql
+
       - name: Copiar archivo SQL a EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "create.sql"  # Asegúrate de que este archivo está en la raíz del repo
+          source: "create.sql"
           target: /home/ec2-user/
 
       - name: Ejecutar SQL dentro del contenedor PostgreSQL
@@ -28,8 +31,17 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker cp /home/ec2-user/create.sql postgresql-dev:/home/ec2-user/create.sql
+            echo "📁 Verificando que el archivo existe en EC2..."
+            ls -lh /home/ec2-user/create.sql
+
+            echo "🐳 Verificando que el contenedor 'postgresql-dev' está corriendo..."
+            docker ps | grep postgresql-dev || { echo "❌ El contenedor postgresql-dev no está corriendo"; exit 1; }
+
+            echo "📦 Copiando SQL dentro del contenedor..."
+            docker cp /home/ec2-user/create.sql postgresql-dev:/tmp/create.sql
+
+            echo "⚙️ Ejecutando SQL dentro del contenedor..."
             docker exec -i postgresql-dev \
               psql -U ${{ secrets.POSTGRES_USER }} \
                    -d ${{ secrets.POSTGRES_DB }} \
-                   -f /home/ec2-user/create.sql
+                   -f /tmp/create.sql
