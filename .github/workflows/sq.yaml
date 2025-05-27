@@ -12,13 +12,16 @@ jobs:
       - name: Clonar repositorio
         uses: actions/checkout@v4
 
+      - name: Verificar que el archivo create.sql existe
+        run: ls -lh create.sql
+
       - name: Copiar archivo SQL a EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          source: "create.sql"  # Asegúrate de que este archivo está en la raíz del repo
+          source: "create.sql"
           target: /home/ec2-user/
 
       - name: Ejecutar SQL dentro del contenedor PostgreSQL
