@@ -31,16 +31,7 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            echo "📁 Verificando que el archivo existe en EC2..."
-            ls -lh /home/ec2-user/create.sql
-
-            echo "🐳 Verificando que el contenedor 'postgresql-dev' está corriendo..."
-            docker ps | grep postgresql-dev || { echo "❌ El contenedor postgresql-dev no está corriendo"; exit 1; }
-
-            echo "📦 Copiando SQL dentro del contenedor..."
             docker cp /home/ec2-user/create.sql postgresql-dev:/tmp/create.sql
-
-            echo "⚙️ Ejecutando SQL dentro del contenedor..."
             docker exec -i postgresql-dev \
               psql -U ${{ secrets.POSTGRES_USER }} \
                    -d ${{ secrets.POSTGRES_DB }} \
