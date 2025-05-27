@@ -1,4 +1,4 @@
-name: Carga de datos desde archivos sql
+name: Carga de datos desde archivos SQL
 
 on:
   push:
@@ -6,29 +6,30 @@ on:
   workflow_dispatch:
 
 jobs:
-  copy-files:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Copy SQL files to EC2
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "create.sql"
-        target: /home/ec2-user/
+      - name: Clonar repositorio
+        uses: actions/checkout@v4
 
-  run-sql:
-    runs-on: ubuntu-latest
-    needs: copy-files
-    steps:
-    - name: Execute SQL inside Docker container
-      uses: appleboy/ssh-action@v0.1.10
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USER }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          docker cp /home/ec2-user/create.sql postgresql-dev:/home/ec2-user/create.sql
-          docker exec -i postgresql-dev psql -U ${{ secrets.POSTGRES_USER }} -d ${{ secrets.POSTGRES_DB }} -f /home/ec2-user/create.sql
+      - name: Copiar archivo SQL a EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "create.sql"  # Asegúrate de que este archivo está en la raíz del repo
+          target: /home/ec2-user/
+
+      - name: Ejecutar SQL dentro del contenedor PostgreSQL
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            docker cp /home/ec2-user/create.sql postgresql-dev:/home/ec2-user/create.sql
+            docker exec -i postgresql-dev \
+              psql -U ${{ secrets.POSTGRES_USER }} \
+                   -d ${{ secrets.POSTGRES_DB }} \
+                   -f /home/ec2-user/create.sql
