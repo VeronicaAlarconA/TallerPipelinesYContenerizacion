@@ -1,4 +1,4 @@
-name: Despliegue automatizado de postgreSQL en EC2
+name: Despliegue automatizado de postgreSQL en EC2 v
 
 on:
   push:
